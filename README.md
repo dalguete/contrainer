@@ -29,7 +29,7 @@ How the process is
 For this to be effective, the **contrainer** container should run first, so it can be
 aware of others. Preferrable a contrainer per Docker Engine installed host.
 
-What contrainer will do is the next:
+What **contrainer** will do is the next:
 
   1. Waiting for a container to start, by looping on Docker events.
 
@@ -75,7 +75,7 @@ The value for `<actual commands>` is straightforward, they are all the commands 
 The first line, know as **header** deserves some explanation:
 
   * **\<target\>**, indicates where to run the commands into. It's composed of keywords
-    and/or container names, mixed with operators `!` and `+`. They give the chance
+    and/or container names, mixed with operators `~` and `+`. They give the chance
     to affect (or not) one or more targets, in one shot.
 
     So keywords are:
@@ -90,7 +90,7 @@ The first line, know as **header** deserves some explanation:
 
     Think about this; affect all items but host and contrainer, you'll use something like:
     ```
-    %all!%host!%contrainer
+    %all~%host~%contrainer
     ```
 
     Now in case you wanna affect two identified targets plus the current container,
@@ -101,35 +101,35 @@ The first line, know as **header** deserves some explanation:
 
     To affect all real containers only, you can use:
     ```
-    %all!%contrainer!%host
+    %all~%contrainer~%host
     ```
 
-    Beware of the order, this **`%me!%all`** will match nothing, while **`%all!%me`** will match
-    everything but current container.
+    Beware of the order, this **`%me~%all`** will match nothing (no targets), while
+    **`%all~%me`** will match everything but current container.
 
-  * **\<docker event\>**, is the name of the event to use as trigger, for the scripts
+  * **\<docker event\>**, is the name of the event (all lowercase) to use as trigger, for the scripts
     execution. If more than one, they must be defined separated by colon (:). This is
     optional, and when no docker event is set, that means you want to trigger the
     script in and **inmediate** fashion (more below).
 
 This format can happen several times per script output, so in such cases, separate
 them with commas, something like:
-
     ```
-    %all!%host!%contrainer,name_1+name_2+%me:create:destroy
+    %all~%host~%contrainer,name_1+name_2+%me:create:destroy
     ```
 
 An **inmediate** event means dispatch the script inmediately, if target available,
 or schedule it for dispatch when target becomes available. This ones happens before
 any real Docker event.
 
-For situation where you want to dispatch the script for the very same analyzed container,
+For situations where you want to dispatch the script for the very same analyzed container,
 it's better to leave the line blank.
-Setting it as `%me`, will give you same results. You'd think `%me:create` means
-the same, but that's not completely true, as those scripts will be run only when
-container has reached the 'Create' Docker event. If the container was already working
-(already created) when this new entry was added, scripts with that header will
-do nothing.
+Setting it as `%me`, will give you same results.
+
+You'd think `%me:create` means the same, but that's not completely true, as those
+scripts will be run only when container has reached the 'Create' Docker event. If
+the container was already working (already created) when this new entry was added,
+scripts with that header will not be run.
 
 
 Super Privileged
@@ -138,7 +138,9 @@ Super Privileged
 For **contrainer** to have full access to the host env (desired as this is a controller), 
 it will need to be run in a **Super Privileged** state, as the container will be eventually
 dispatching commands at host level (good guide about it http://developerblog.redhat.com/2014/11/06/introducing-a-super-privileged-container-concept/,
-look for the section *Execute a command in the host namespace*).
+look for the section *Execute a command in the host namespace*), and mainly, to
+let **contrainer** to use Docker commands direclty, inside of it, like if Docker
+was installed (More info on that, http://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/)
 
 **contrainer** running settings will vary depending on the commands exposed by
 other containers, but running it like the next, will work:
@@ -166,17 +168,17 @@ line and when host is affected, the next structure will be used:
 sudo nsenter --mount=$S1YSIMAGE/proc/1/ns/mnt -- <host command>
 ```
 
-That way host namespace will be accesed and the command will affect host, not container.
+That way host namespace will be accesed and the command will affect host, not **contrainer**.
 Depending on what you permit **contrainer** to do, you can add/drop support for
 caps, as `--privileged` could be too open. In other situations you'll need to mount,
 via volumes, access to certain host folders, so **contrainer** can see them clearly.
 
 The most complicated params to run **contrainer**, the more diverse and complicated
-operations container scripts will be able to perfomr; but also the most the responsibility
+operations container scripts will be able to perform; but also the most the responsibility
 on your shoulders to not see your host die.
 
 <strong>IMPORTANT: <em>contrainer</em> will be able to run anything passed to it by the other containers,
-good and bad things can happen, so before running a container aimed to be controlled
+good and bad things can happen, so before running a container, aimed to be controlled
 by <em>contrainer</em>, ensure the scripts offered are harmless by inspecting the
 container first.</strong>
 
@@ -202,6 +204,14 @@ be used as commands to execute on *target+events* as explained above, see sectio
 
 **contrainer** will use a list to control all these scripts existences and dispatch
 executions.
+
+
+Contrainer Dockerfile
+---------------------
+
+There's an automatically build image that holds all the **contrainer** functionality
+in case you don't want to install it manually. It's heregit@github.com:dalguete/contrainer-docker.git
+
 
 
 Ubuntu PPA
