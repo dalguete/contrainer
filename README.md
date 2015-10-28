@@ -3,6 +3,7 @@ Contrainer
 
 "**Contr**oller Cont**ainer**" scripts used to react to other containers Docker events.
 
+Meant to be used inside a container, under Docker.
 
 General
 -------
