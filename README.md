@@ -210,8 +210,7 @@ Contrainer Dockerfile
 ---------------------
 
 There's an automatically build image that holds all the **contrainer** functionality
-in case you don't want to install it manually. It's here https://github.com/dalguete/contrainer.git
-
+in case you don't want to install it manually. It's here https://github.com/dalguete/contrainer-docker.git
 
 
 Ubuntu PPA
