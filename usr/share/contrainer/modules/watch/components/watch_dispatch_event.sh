@@ -18,21 +18,21 @@ function watch_dispatch_event() {
   local event="$2"
 
   # Get the name of the container that triggered the event
-  local triggeringContainerName="$($TO_HOST docker inspect --format '{{.Name}}' $triggeringContainerId | sed 's,.*/,,')"
+  local triggeringContainerName="$($TO_HOST docker inspect --format '{{.Name}}' $triggeringContainerId 2> /dev/null | sed 's,.*/,,')"
 
   # Loop through all available index scripts given the current event
   while read indexScript; do
     if [ -z "$indexScript" ]; then
       continue
     fi
-
+echo "-----"
     # Run index scripts with every reachable system (host included)
     while read system; do
       # Get the name of the system currently checked
       local systemName="$system"
 
       if [ "$system" != "%host" ]; then
-        systemName="$($TO_HOST docker inspect --format '{{.Name}}' $system | sed 's,.*/,,')"
+        systemName="$($TO_HOST docker inspect --format '{{.Name}}' $system 2> /dev/null | sed 's,.*/,,')"
       fi
 echo "...$event : $systemName"
 
@@ -51,12 +51,18 @@ echo "si... $script"
       # Use a slightly different approach when %host
       if [ "$system" = "%host" ]; then
         # Run the script
-        $TO_HOST sh -c "$temp"
+echo "in host"
+        $TO_HOST sh -c "\
+          export CONTRAINER_ID=$CONTRAINER_ID \
+          && export CONTRAINER_NAME=$CONTRAINER_NAME \
+          && export REGISTRAR_CONTAINER_ID=$triggeringContainerId \
+          && export REGISTRAR_CONTAINER_NAME=$triggeringContainerName \
+          && export DOCKER_EVENT=$event \
+          && $temp"
       else
         # Move the obtained script to container. Notice the several 2> /dev/null
         # Redirections. Must be placed there as there's a chance the target system
         # is not present anymore.
-echo 3
         local temp2=$($TO_HOST docker exec $system mktemp 2> /dev/null)
 echo 4
         $TO_HOST docker cp "$temp" $system:"$temp2" 2> /dev/null
@@ -66,7 +72,13 @@ echo 5
         # Run the script
 echo 6
 echo "$temp2"
-        $TO_HOST docker exec $system sh -c "$temp2" 2> /dev/null
+        $TO_HOST docker exec $system sh -c "\
+          export CONTRAINER_ID=$CONTRAINER_ID \
+          && export CONTRAINER_NAME=$CONTRAINER_NAME \
+          && export REGISTRAR_CONTAINER_ID=$triggeringContainerId \
+          && export REGISTRAR_CONTAINER_NAME=$triggeringContainerName \
+          && export DOCKER_EVENT=$event \
+          && $temp2" 2> /dev/null
 
         # Remove the temp file created
 echo 7

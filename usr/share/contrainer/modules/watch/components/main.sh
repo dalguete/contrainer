@@ -51,10 +51,6 @@ function watch_consume() {
 #   Prints the Docker events as they are consumed, and inform about scripts execution.
 #   Keeps printing, unless terminated.
 function watch() {
-  # Collector helpers used to indicate events from a container must be collected,
-  # not dispatched yet.
-  local collectorContainers=()
-
   # Continuously read the events as they arrive. The output buffer is disabled explicitly,
   # as there's no certainty on what 'docker events' does. It seems works fine, but
   # just in case.
@@ -82,15 +78,23 @@ function watch() {
           set_option "container_${containerId}_events" "_inmediate" 1
         fi
 
-        # Reaching the 'Start' event means consume collected events
+        # Reaching the 'Start' event means init scripts and start consuming collected events
         if [ "$event" = "start" ]; then
-          while read e; do
+          # Init scripts
+          watch_init_scripts "$containerId"
+
+          # Consume enqueued events
+          while IFS= read e; do
             watch_dispatch_event "$containerId" "$e"
-          done <<< $(get_options "container_${containerId}_events")
+            remove_option "container_${containerId}_events" "$e"
+          done <<< "$(get_options "container_${containerId}_events")"
+
+          # Remove the option set to start collecting
+          remove_option "container_${containerId}_collect" "$containerId"
         fi
   
         # Check the container has been marked to collect.
-        if [ is_option "container_${containerId}_collect" "$containerId" ]; then
+        if [ $(is_option "container_${containerId}_collect" "$containerId") -eq 1 ]; then
           set_option "container_${containerId}_events" "$event" 1
           continue
         fi
