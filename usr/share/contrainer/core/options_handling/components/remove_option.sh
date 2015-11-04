@@ -10,18 +10,22 @@ function remove_option() {
 
   # Get the items passed
   local key=$(echo "$1" | tr '-' '_')
+  local value="$2"
 
-  # Get all the options for the given key
-  local options=($(get_options "$key"))
+  # Get the options store place
+  local var="OPTION__$key"
 
-  # Check the value is set already
-  local is=0;
-  for item in "${options[@]}"; do
-    if [[ "$item" == "$2" ]]; then
-      is=1
-      break;
+  # Loop through the option obtained to remove the desired one
+  local array="$var[@]"
+  local newArray=()
+
+  for op in "${!array}"; do
+    if [[ "$op" != "$value" ]]; then
+      newArray[${#newArray[@]}]="$op"
     fi
   done
 
-  echo $is
+  # Reassing the new array formed
+  eval "$var=(\"\${newArray[@]}\")"
 }
+

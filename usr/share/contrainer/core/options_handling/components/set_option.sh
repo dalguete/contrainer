@@ -17,15 +17,17 @@ function set_option() {
   local var="OPTION__$key"
   eval "$var=(\"\${$var[@]}\" \"$value\")"
 
+  # Remove duplicate. When repeated, latest entry will be preserved.
+  # As function return array separated by \n, we prepare the same env
+  IFS=$'\n'
+  local arrayAux=($(reverse_array $var[@]));
+
   if [ -z ${3+x} ]; then
-    # Remove duplicate. When repeated, latest entry will be preserved.
-    # As function return array separated by \n, we prepare the same env
-    IFS=$'\n'
-    local arrayAux=($(reverse_array $var[@]));
     arrayAux=($(remove_duplicates_array arrayAux[@]));
-    arrayAux=($(reverse_array arrayAux[@]));
-    unset IFS
   fi
+
+  arrayAux=($(reverse_array arrayAux[@]));
+  unset IFS
 
   # Return findings
   eval "$var=(\"\${arrayAux[@]}\")"
