@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+# Controller Container scripts used to react to other containers Docker events.
+#
+# Meant to be used inside a container, under Docker.
+# 
+# This way containers in a Docker Engine host can communicate with its enviroment
+# (host, the container holding this solution, other containers reachable via Docker
+# Client on host) and set things up
+#
+# Author: Daniel Dalgo <dalguete@gmail.com>
+#
+
+# Main operative function where all the magic happens
+# This uses a bunch of other functions defined internally, as everything works under
+# a subshell (give the code a look) so there's no risk of accidentally expose a
+# utility function other than the main one.
+contrainer() {
+  ###################################
+  # Start almost unnoticed subshell #
+  ###################################
+  # This is key, to let inner processes use the main function to get results.
+  # This causes the whole processing to be run in an isolated new subshell,
+  # avoiding pollute shell with vars, and second and most important giving the chance
+  # for inner processes to directly call the main function with total confidence, knowing
+  # that changes made there won't affect variables already set in a current call.
+  # Without this, any inner main function call would override variables set in parent
+  # call, possible producing undesirable results.
+  (
+  
+  # Functionality is defined in so called, modules. There live some functions
+  # that will perform specific tasks. Use that approach to add functionality, do
+  # not add it here directly.
+  #
+  # There are no mandatory rules for naming module folder or inner files, but it's
+  # recommended to use same function name in main folder and in inner definition
+  # file, to keep things consistent.
+  #
+  # Talking about error handling in functions, as everything in run in a subshell, error can
+  # be reported with 'exit' instead of return, and actually that's the recommended
+  # way (if you wanna use return, be warned your function won't be as usable as
+  # you'd like, as user will have to do custom checks)
+  # When calling the main function internally, you must be aware you'll have to do further
+  # error checks to decide if the execution must stop or continue. Exiting a main
+  # function call won't halt the process, because it's contained in a subshell; while
+  # exiting any other function will actually do.
+  #
+  # As a convenience, when dealing with main function call, the next format for
+  # error handling is suggested:
+  #
+  #   { <function call plus params>; } || exit $?
+  #
+  # That way we guarantee that in case of a execution failure, the whole process
+  # will exit, no matter how many levels deep. Obviously you can turn the bracketed
+  # code, in something a lot more complex.
+
+  # Functionality live in other files. Set that way for convenience, and to keep this file
+  # as short an clean as possible
+  function _load() {
+    for i in $(find `echo "$1"`); do
+      if [ -r "$i" ]; then
+        . "$i"
+      fi
+    done
+  }
+
+  # Load core modules (basic functionality)
+  _load "/usr/share/contrainer/core/*/*.sh"
+  # Load main modules (basic functionality)
+  _load "/usr/share/contrainer/modules/*/*.sh"
+  # TODO: Load other modules (extended functionality), third party
+  # _load "<path/to/more/scripts>"
+
+  # Check this is run inside a Docker container
+  if [ ! -f /.dockerinit ]; then
+    die "Not running inside a Docker container, Bye!"
+  fi
+
+  # Check the SYSIMAGE variable is set and actually pointing to an existent folder.
+  if [ -z "$SYSIMAGE" ]; then
+    die "No host image detected."
+  fi
+
+  # Set a helper variable used to prefix every run command aimed to affect host
+  TO_HOST="sudo nsenter --mount=$SYSIMAGE/proc/1/ns/mnt --"
+
+  # Check Docker is actually accesible
+  $TO_HOST docker &> /dev/null
+  if [ $? -ne 0 ]; then
+    die "Docker is not accesible."
+  fi
+
+  # Get the container id and name of the current contrainer
+  CONTRAINER_ID="$(cat /proc/self/cgroup | grep -o -e "docker-.*.scope" | head -n 1 | sed "s/docker-\(.*\).scope/\\1/")"
+  CONTRAINER_NAME="$($TO_HOST docker inspect --format '{{.Name}}' $CONTRAINER_ID | sed 's,.*/,,')"
+
+  # Arguments passed are consumed, and operation called, if any found
+  consume "$@"
+
+  ##########################################
+  # Finish almost unnoticed subshell start #
+  ##########################################
+  )
+}
+
+# Call the main function with all params passed
+contrainer "$@"
