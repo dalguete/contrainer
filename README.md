@@ -28,30 +28,31 @@ How the process is
 ------------------
 
 For this to be effective, the **contrainer** container should run first, so it can be
-aware of others. Preferrable a contrainer per Docker Engine installed host.
+aware of others. Preferrable a **contrainer** per Docker Engine installed host.
 
 What **contrainer** will do is the next:
 
-  1. Waiting for a container to start, by looping on Docker events.
+  1. Consume all Docker events as they get generated.
 
-  2. Put in a list container id + event info as it happens.
+  2. Wait until a given container is completely up and running, that is after 'Start'
+    event has been triggered.
 
-  3. At the same time, start consuming registered events in the list.
+  3. Gather all scripts made available by the container, now running, and register
+    them for later execution. Some index scripts are created in the process, those
+    used to help in the process of running the definitive scripts in the appropriate
+    places.
 
-  4. When reached a given container 'Create' event, all its *contrainer* scripts will be
-    executed in container and output stored in **contrainer** for later execution.
-    In this step, all scripts, no matter the target or event, will be executed.
-    When done, it will start consuming that container 'inmediate' and  'Create' registered
-    scripts, as returned from container previous execution. **inmediate** is like a
-    internal wildcard event, used to be executed as soon as a target is available.
+  4. Start processing all registered scripts as soon as the Docker events are being
+    triggered. There's an intenal event handled, called **_inmediate**, that can
+    be used to trigger processes as soon as a container is available.
     More on this later, keep reading. :)
 
-  5. Check all other container id + events info stored in the list, and dispatch the
+  3. Check all other container id + events info stored in the list, and dispatch the
     scripts.
 
-  6. When reached a given container 'Die' event, first, dispatch the scripts and when
-    done, remove that container's list of events as created when the first time
-    'Create' event, was reached.
+  4. When reached a given container 'Die' event, first, dispatch the scripts and when
+    done, remove that container's list of scripts registered when the first time
+    'Start' event, was reached.
 
 
 Scripts output format
@@ -111,7 +112,7 @@ The first line, know as **header** deserves some explanation:
   * **\<docker event\>**, is the name of the event (all lowercase) to use as trigger, for the scripts
     execution. If more than one, they must be defined separated by colon (:). This is
     optional, and when no docker event is set, that means you want to trigger the
-    script in and **inmediate** fashion (more below).
+    script in and **_inmediate** fashion (more below).
 
 This format can happen several times per script output, so in such cases, separate
 them with commas, something like:
@@ -119,7 +120,7 @@ them with commas, something like:
     %all~%host~%contrainer,name_1+name_2+%me:create:destroy
     ```
 
-An **inmediate** event means dispatch the script inmediately, if target available,
+An **_inmediate** event means dispatch the script inmediately, if target available,
 or schedule it for dispatch when target becomes available. This ones happens before
 any real Docker event.
 
@@ -132,6 +133,8 @@ scripts will be run only when container has reached the 'Create' Docker event. I
 the container was already working (already created) when this new entry was added,
 scripts with that header will not be run.
 
+For improved readability, spaces are allowed anywhere. When processed they will be
+simply removed.
 
 Super Privileged
 ----------------
