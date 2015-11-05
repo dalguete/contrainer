@@ -217,6 +217,21 @@ There's an automatically build image that holds all the **contrainer** functiona
 in case you don't want to install it manually. It's here https://github.com/dalguete/contrainer-docker.git
 
 
+Known issues
+------------
+
+1. For some reason, executing **docker cp** inside contrainer sets the Docker Engine
+  in a position that as soon as any container exits, it complains saying:
+  ```
+  Error deleting container: Error response from daemon: Cannot destroy container <XYZ123>: Driver aufs failed to remove root filesystem <XYZ123>:: device or resource busy
+  ```
+  After some tests, the only way to overcome this problem was by not mounting `/` inside
+  the container. Obviously that is not possible as that is required for the Super Privileged
+  container status. The option was when required copying files/folders to host, put
+  them directly there, using the `$SYSIMAGE` var, and when required to move them to
+  another container, use a trick with `docker exec` as defined here https://medium.com/@gchudnov/copying-data-between-docker-containers-26890935da3f
+
+
 Ubuntu PPA
 ==========
 
