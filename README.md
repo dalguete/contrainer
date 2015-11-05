@@ -146,8 +146,8 @@ look for the section *Execute a command in the host namespace*), and mainly, to
 let **contrainer** to use Docker commands direclty, inside of it, like if Docker
 was installed (More info on that, http://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/)
 
-**contrainer** running settings will vary depending on the commands exposed by
-other containers, but running it like the next, will work:
+In general, the minimal to start a **contrainer** is like the one shown below (you
+can add more setting but remember to at least have these options in place):
 
 ```
 sudo docker run \
@@ -155,7 +155,7 @@ sudo docker run \
   -e SYSIMAGE=/host \
   -v /:/host \
   <contrainer installed image name> \
-  <contrainer command>
+  contrainer watch
 ```
 
 (Inner processes expect to use **SYSIMAGE** env var, so always set it).
@@ -164,9 +164,8 @@ That way, everything in host will be exposed into **contrainer**, so please **BE
 and **BE RESPONSABLE** on what the exposed scripts, in your containers, will do.
 
 **contrainer** will decide how to run a given script, given the target to affect.
-So, when containers are targets, it will use the `docker exec` facility, when
-**contrainer** itself is affected, it will run the commands directly in command
-line and when host is affected, the next structure will be used:
+So, when containers or **contrainer** is target, it will use the `docker exec` facility, 
+and when host is affected, the next structure will be used:
 
 ```
 sudo nsenter --mount=$S1YSIMAGE/proc/1/ns/mnt -- <host command>
@@ -174,8 +173,7 @@ sudo nsenter --mount=$S1YSIMAGE/proc/1/ns/mnt -- <host command>
 
 That way host namespace will be accesed and the command will affect host, not **contrainer**.
 Depending on what you permit **contrainer** to do, you can add/drop support for
-caps, as `--privileged` could be too open. In other situations you'll need to mount,
-via volumes, access to certain host folders, so **contrainer** can see them clearly.
+caps, as `--privileged` could be too open.
 
 The most complicated params to run **contrainer**, the more diverse and complicated
 operations container scripts will be able to perform; but also the most the responsibility
@@ -220,16 +218,20 @@ in case you don't want to install it manually. It's here https://github.com/dalg
 Known issues
 ------------
 
-1. For some reason, executing **docker cp** inside contrainer sets the Docker Engine
+* For some reason, executing **docker cp** inside **contrainer** sets the Docker Engine
   in a position that as soon as any container exits, it complains saying:
+
   ```
   Error deleting container: Error response from daemon: Cannot destroy container <XYZ123>: Driver aufs failed to remove root filesystem <XYZ123>:: device or resource busy
   ```
+
+  (With `<XYZ123Z` being a container id)
+
   After some tests, the only way to overcome this problem was by not mounting `/` inside
   the container. Obviously that is not possible as that is required for the Super Privileged
-  container status. The option was when required copying files/folders to host, put
-  them directly there, using the `$SYSIMAGE` var, and when required to move them to
-  another container, use a trick with `docker exec` as defined here https://medium.com/@gchudnov/copying-data-between-docker-containers-26890935da3f
+  container status. The solution was to copy files/folders to host by putting them directly
+  there, using the `$SYSIMAGE` var, and when required to move them to another container,
+  use a trick with `docker exec` as defined here https://medium.com/@gchudnov/copying-data-between-docker-containers-26890935da3f
 
 
 Ubuntu PPA
