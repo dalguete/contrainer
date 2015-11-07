@@ -27,7 +27,7 @@ function watch_compile_header() {
   # Set some helpers used to tokenize the header
   local tokenTarget="%me|%contrainer|%host|%all|[a-zA-Z0-9][a-zA-Z0-9_.-]*"
   local tokenTargetOperator="[~+]"
-  local tokenEvent="[a-z][a-z_]*"
+  local tokenEvent="[a-z][a-z_]*|_inmediate"
   local tokenEventSeparator="[:]"
   local tokenSeparator="[,]"
 

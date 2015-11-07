@@ -27,7 +27,7 @@ function watch_check_header() {
   local tokenTargetOperator="[~+]"
   local validTargetSelector="($tokenTarget)(($tokenTargetOperator)($tokenTarget))*"
 
-  local tokenEvent="[a-z][a-z_]*"
+  local tokenEvent="[a-z][a-z_]*|_inmediate"
   local tokenEventSeparator="[:]"
   local validEventSelector="(($tokenEventSeparator)($tokenEvent))*"
 

@@ -20,7 +20,7 @@ function watch_init_scripts() {
     local output="$($TO_HOST docker exec "$containerId" "$script" 2> /dev/null)"
 
     # Invalid Header in contrainer script output is discarded.
-    if [ $(watch_check_header "$output") -ne 1 ]; then
+    if [[ $(watch_check_header "$output") != 1 ]]; then
       continue
     fi
 
