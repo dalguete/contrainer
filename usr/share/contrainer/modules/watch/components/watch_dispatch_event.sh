@@ -38,7 +38,7 @@ function watch_dispatch_event() {
       if [ -z "$script" ]; then
         continue
       fi
-status "$event: $systemName"
+
       # Move the obtained script to host
       local scriptInHost=$($TO_HOST mktemp)
       # NOTE: Not used the 'docker cp' approach as that was causing errors when
