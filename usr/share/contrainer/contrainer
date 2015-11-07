@@ -82,7 +82,7 @@ contrainer() {
   fi
 
   # Set a helper variable used to prefix every run command aimed to affect host
-  TO_HOST="sudo nsenter --mount=$SYSIMAGE/proc/1/ns/mnt --"
+  TO_HOST="sudo nsenter --mount=$SYSIMAGE/proc/1/ns/mnt --uts=$SYSIMAGE/proc/1/ns/uts --net=$SYSIMAGE/proc/1/ns/net --"
 
   # Check Docker is actually accesible
   $TO_HOST docker &> /dev/null

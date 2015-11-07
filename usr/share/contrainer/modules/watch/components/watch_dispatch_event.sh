@@ -50,7 +50,13 @@ status "$event: $systemName"
       # Use a different approach when %host
       if [ "$system" = "%host" ]; then
         # Run the script
-        $TO_HOST sh -c "\
+        # Environ variables from host system (process 1) are extracted first
+        local hostEnviron="$($TO_HOST env - sh -c "xargs -n 1 -0 < /proc/1/environ | xargs -I {} echo export {} \&\&")"
+
+        # As solely nsenter is used to access host, environment needs to be wiped so
+        # container's setting won't affect
+        $TO_HOST env - sh -c "\
+          $hostEnviron
           export CONTRAINER_ID=$CONTRAINER_ID \
           && export CONTRAINER_NAME=$CONTRAINER_NAME \
           && export REGISTRAR_CONTAINER_ID=$triggeringContainerId \
