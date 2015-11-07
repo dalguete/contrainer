@@ -119,7 +119,7 @@ EOF
         # Get the info based on keyword found
         entry="$token"
         if [ "$token" = "%all" ]; then
-          entry="\$($TO_HOST docker ps --no-trunc -q | xargs -I {} $TO_HOST docker inspect --format '{{.Name}}' {} | sed 's,.*/,,' | sed '$ a %host')"
+          entry="\$($TO_HOST docker ps --no-trunc -q --format '{{.Names}}' | sed '$ a %host')"
         elif [ "$token" = "%me" ]; then
           entry="$containerName"
         elif [ "$token" = "%contrainer" ]; then

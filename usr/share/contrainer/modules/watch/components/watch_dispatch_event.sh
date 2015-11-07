@@ -28,12 +28,9 @@ function watch_dispatch_event() {
 
     # Run index scripts with every reachable system (host included)
     while read system; do
-      # Get the name of the system currently checked
-      local systemName="$system"
-
-      if [ "$system" != "%host" ]; then
-        systemName="$($TO_HOST docker inspect --format '{{.Name}}' $system 2> /dev/null | sed 's,.*/,,')"
-      fi
+      # Strip system var components
+      local systemName=${system#*:}
+      system=${system%%:*}
 
       # Get info from the execution of indexScript. What will be returned, is the
       # name of the actual script to run
@@ -41,7 +38,7 @@ function watch_dispatch_event() {
       if [ -z "$script" ]; then
         continue
       fi
-
+status "$event: $systemName"
       # Move the obtained script to host
       local scriptInHost=$($TO_HOST mktemp)
       # NOTE: Not used the 'docker cp' approach as that was causing errors when
@@ -88,7 +85,7 @@ function watch_dispatch_event() {
 
       # Remove the temp file created
       $TO_HOST rm "$scriptInHost" 2> /dev/null
-    done <<< "$($TO_HOST docker ps --no-trunc -q | sed '$ a %host')"
+    done <<< "$($TO_HOST docker ps --no-trunc -q --format '{{.ID}}:{{.Names}}' | sed '$ a %host:%host')"
   done <<< "$(find /var/lib/contrainer/index/*/$event/* -maxdepth 0 -type f -executable 2> /dev/null)"
 }
 
