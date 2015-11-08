@@ -33,9 +33,9 @@ function watch_init_scripts() {
       header="%me:_inmediate"
     fi
   
-    # Register the script
+    # Register the script. Use sha to form the script name
     mkdir -p "/var/lib/contrainer/scripts/$containerId"
-    local scriptName="$RANDOM$RANDOM"
+    local scriptName="$(echo "$output" | shasum -a 256 | cut -d ' ' -f1)"
     echo "$output" > "/var/lib/contrainer/scripts/$containerId/$scriptName"
 
     # Triggering scripts (based on header definition) are created to ease script execution discovery

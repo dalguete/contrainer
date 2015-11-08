@@ -84,6 +84,11 @@ contrainer() {
   # Set a helper variable used to prefix every run command aimed to affect host
   TO_HOST="sudo nsenter --mount=$SYSIMAGE/proc/1/ns/mnt --uts=$SYSIMAGE/proc/1/ns/uts --net=$SYSIMAGE/proc/1/ns/net --"
 
+  # Set a helper variable used to prefix every run command aimed to affect a container
+  # Intended to replace 'docker exec' calls as that turned out to perform slower
+  # that with nsenter. Use this in conjunction with $TO_HOST
+  TO_CONTAINER="nsenter --target _ --mount --uts --net --"
+
   # Check Docker is actually accesible
   $TO_HOST docker &> /dev/null
   if [ $? -ne 0 ]; then

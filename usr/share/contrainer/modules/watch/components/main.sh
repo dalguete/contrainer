@@ -101,11 +101,6 @@ function watch() {
 
         # Dispatch the current event
         watch_dispatch_event "$containerId" "$event"
-
-        # Remove all registered scripts for the now dead container.
-        if [ "$event" = "die" ]; then
-          watch_remove_scripts "$containerId"
-        fi
         ;;
 
       "delete" | "import" | "pull" | "push" | "tag" | "untag" )
