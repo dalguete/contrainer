@@ -73,7 +73,7 @@ function watch_compile_header() {
       # Build the script, one per event
       for event in "${eventsList[@]}"; do
         mkdir -p "/var/lib/contrainer/index/$containerId/$event"
-        local scriptName="$RANDOM$RANDOM"
+        local scriptName="$(basename "$scriptPath")"
         cat<<EOF > "/var/lib/contrainer/index/$containerId/$event/$scriptName"
 #!/usr/bin/env bash
 containerName="\${1:-''}"

@@ -20,7 +20,9 @@ function watch_dispatch_event() {
   # Get the name of the container that triggered the event
   local triggeringContainerName="$($TO_HOST docker inspect --format '{{.Name}}' $triggeringContainerId 2> /dev/null | sed 's,.*/,,')"
 
-  # Loop through all available index scripts given the current event
+  # Loop through all available index scripts given the current event. It's important
+  # to get only unique scripts (based on the sha name on them) to prevent executing
+  # the same script more than once for the current event (see this loop code at the bottom)
   while read indexScript; do
     if [ -z "$indexScript" ]; then
       continue
@@ -38,7 +40,7 @@ function watch_dispatch_event() {
       if [ -z "$script" ]; then
         continue
       fi
-status "$event: $systemName"
+
       # Move the obtained script to host
       local scriptInHost=$($TO_HOST mktemp)
       # NOTE: Not used the 'docker cp' approach as that was causing errors when
@@ -102,7 +104,7 @@ status "$event: $systemName"
       # Remove the temp file created
       $TO_HOST rm "$scriptInHost" 2> /dev/null
     done <<< "$($TO_HOST docker ps --no-trunc -q --format '{{.ID}}:{{.Names}}' | sed '$ a %host:%host')"
-  done <<< "$(find /var/lib/contrainer/index/*/$event/* -maxdepth 0 -type f -executable 2> /dev/null)"
+  done <<< "$(find /var/lib/contrainer/index/*/$event/* -maxdepth 0 -type f -executable -printf '%f %p'"\n" 2> /dev/null | awk -F" " '!_[$1]++' | cut -d ' ' -f 2)"
 
   # When the event was 'die', remove all registered scripts for the now dead container.
   if [ "$event" = "die" ]; then

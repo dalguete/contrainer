@@ -24,6 +24,9 @@ function watch_init_scripts() {
       continue
     fi
 
+    # Get the sha of the script
+    local scriptSHA="$(echo "$output" | shasum -a 256 | cut -d ' ' -f1)"
+
     # Get header and rewrite output without it
     local header=$(echo "$output" | head -n 1 | tr -d '[[:space:]]')
     output="$(echo "$output" | tail -n+2)"
@@ -33,13 +36,12 @@ function watch_init_scripts() {
       header="%me:_inmediate"
     fi
   
-    # Register the script. Use sha to form the script name
+    # Register the script.
     mkdir -p "/var/lib/contrainer/scripts/$containerId"
-    local scriptName="$(echo "$output" | shasum -a 256 | cut -d ' ' -f1)"
-    echo "$output" > "/var/lib/contrainer/scripts/$containerId/$scriptName"
+    echo "$output" > "/var/lib/contrainer/scripts/$containerId/$scriptSHA"
 
     # Triggering scripts (based on header definition) are created to ease script execution discovery
-    watch_compile_header "$containerId" "$header" "/var/lib/contrainer/scripts/$containerId/$scriptName"
+    watch_compile_header "$containerId" "$header" "/var/lib/contrainer/scripts/$containerId/$scriptSHA"
   done
 }
 
