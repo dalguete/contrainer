@@ -59,11 +59,13 @@ status "$event: $systemName"
         # As solely nsenter is used to access host, environment needs to be wiped so
         # container's setting won't affect
         $TO_HOST env - sh -c "\
-          $hostEnviron
+          $hostEnviron \
           export CONTRAINER_ID=$CONTRAINER_ID \
           && export CONTRAINER_NAME=$CONTRAINER_NAME \
           && export REGISTRAR_CONTAINER_ID=$triggeringContainerId \
           && export REGISTRAR_CONTAINER_NAME=$triggeringContainerName \
+          && export SYSTEM_ID=$system \
+          && export SYSTEM_NAME=$systemName \
           && export DOCKER_EVENT=$event \
           && $scriptInHost" &> /dev/null
       else
