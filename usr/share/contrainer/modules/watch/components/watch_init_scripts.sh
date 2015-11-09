@@ -25,7 +25,7 @@ function watch_init_scripts() {
     fi
 
     # Get the sha of the script
-    local scriptSHA="$(echo "$output" | shasum -a 256 | cut -d ' ' -f1)"
+    local scriptSHA="$(echo "$output" | sha256sum | cut -d ' ' -f1)"
 
     # Get header and rewrite output without it
     local header=$(echo "$output" | head -n 1 | tr -d '[[:space:]]')
