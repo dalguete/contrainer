@@ -1,0 +1,14 @@
+Source: contrainer
+Section: utils
+Priority: optional
+Maintainer: Daniel Dalgo <dalguete@gmail.com>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.5
+Homepage: http://dalguete.com
+Vcs-Browser: https://github.com/dalguete/contrainer.git
+
+Package: contrainer
+Architecture: any
+Depends: bash (>=4.3), util-linux (>=2.25), coreutils (>=8.23), sed (>=4.2), findutils (>=4.4), mawk (>=1.3.3)
+Description: "Controller Container" scripts used to react to other containers Docker events.
+ Meant to be used inside a container, under Docker.
