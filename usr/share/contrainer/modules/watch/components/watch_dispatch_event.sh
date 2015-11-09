@@ -92,11 +92,18 @@ status "$event: $systemName"
         $TO_HOST ${TO_CONTAINER/_/$systemPid} chmod +x "$scriptInContainer" 2> /dev/null
 
         # Run the script
-        $TO_HOST ${TO_CONTAINER/_/$systemPid} sh -c "\
+        # This is run using 'docker exec' instead 'nsenter' as that somehow sets
+        # some info correctly, so commands can be executed with no problem. Actually
+        # the problem found was not getting info from 'ifconfig' execution. Maybe
+        # adjusting some settings in contrainer run process, but to not complicate
+        # things, better to attach to this apprach instead.
+        $TO_HOST docker exec $system sh -c "\
           export CONTRAINER_ID=$CONTRAINER_ID \
           && export CONTRAINER_NAME=$CONTRAINER_NAME \
           && export REGISTRAR_CONTAINER_ID=$triggeringContainerId \
           && export REGISTRAR_CONTAINER_NAME=$triggeringContainerName \
+          && export SYSTEM_ID=$system \
+          && export SYSTEM_NAME=$systemName \
           && export DOCKER_EVENT=$event \
           && $scriptInContainer" &> /dev/null
 
